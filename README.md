@@ -1,0 +1,1 @@
+This repository contains my exercises and projects from the DataCamp course "Building AI Agents with Google ADK." It explores the fundamentals of AI agents, tool calling, task orchestration, and practical agent development using Google's ADK framework.
