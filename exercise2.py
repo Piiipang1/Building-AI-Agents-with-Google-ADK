@@ -30,3 +30,23 @@ await session_service.create_session(
 
 # Set up a runner to orchestrate the agent
 runner = Runner(agent=welcome_agent, app_name=APP_NAME, session_service=session_service)
+
+# Define an asynchronous function to send a query to the agent and handle its response
+async def call_agent_async(query: str):
+    print(f"\n>>> User Query: {query}")
+
+    # Package the user's query into ADK format
+    content = types.Content(role='user', parts=[types.Part(text=query)])
+    final_response_text = "Agent did not produce a final response."
+
+    # Iterate through streamed agent responses
+    async for event in runner.run_async(user_id=USER_ID, session_id=SESSION_ID, new_message=content):
+        if event.is_final_response(): # Check if this is the final message from the agent
+            if event.content and event.content.parts:
+                final_response_text = event.content.parts[0].text # Extract response text
+            break # Stop listening after final response is received
+
+    print(f"<<< Agent Response: {final_response_text}")
+
+# Run the interaction
+await call_agent_async("I have question!")
