@@ -28,3 +28,14 @@ def lookup_faq(question: str) -> str:
         messages=[{"role": "user", "content": prompt}]
     )
     return response["choices"][0]["message"]["content"].strip()
+
+# Wrap the tool
+faq_tool = FunctionTool(func=lookup_faq)
+
+support_agent = LlmAgent(
+    name="SupportAgent",
+    description="An agent that answers users' questions based on a set of FAQs.",
+    instruction="Use the FAQ tool to help answer customer questions.",
+    model=AGENT_MODEL,
+    tools=[faq_tool]
+)
