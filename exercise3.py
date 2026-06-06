@@ -39,3 +39,25 @@ support_agent = LlmAgent(
     model=AGENT_MODEL,
     tools=[faq_tool]
 )
+
+# Set up session service and runner
+session_service = InMemorySessionService()
+await session_service.create_session(app_name=APP_NAME, user_id=USER_ID, session_id=SESSION_ID)
+runner = Runner(agent=support_agent, app_name=APP_NAME, session_service=session_service)
+
+# Define and call the agent asynchronously
+async def call_agent_async(query: str):
+    print(f"\n>>> User Query: {query}")
+    content = types.Content(role='user', parts=[types.Part(text=query)])
+    final_response_text = "Agent did not produce a final response."
+
+    async for event in runner.run_async(user_id=USER_ID, session_id=SESSION_ID, new_message=content):
+        if event.is_final_response():
+            if event.content and event.content.parts:
+                final_response_text = event.content.parts[0].text
+            break
+
+    print(f"<<< Agent Response: {final_response_text}")
+
+# Run the agent
+await call_agent_async("What is your return policy?")
