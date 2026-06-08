@@ -71,3 +71,32 @@ root_agent = LlmAgent(
     model=AGENT_MODEL,
     sub_agents=[greeting_agent, account_agent, faq_agent]
 )
+
+# Session & runner 
+session_service = InMemorySessionService()
+await session_service.create_session(app_name=APP_NAME, user_id=USER_ID,
+                               session_id=SESSION_ID)
+
+runner = Runner(agent=root_agent, app_name=APP_NAME, session_service=session_service)
+
+# Function to chat with the root agent
+async def call_agent_async(query: str):
+    print(f"\n>>> User Query: {query}")
+    content = types.Content(role="user", parts=[types.Part(text=query)])
+    final_response = "Agent did not produce a final response."
+
+    async for event in runner.run_async(user_id=USER_ID,
+                                        session_id=SESSION_ID,
+                                        new_message=content):
+        if event.is_final_response():
+            if event.content and event.content.parts:
+                final_response = event.content.parts[0].text
+            break
+
+    print(f"<<< Agent {event.author}'s response: {final_response}")
+
+# Test the full system
+await call_agent_async("Hello!")                       # GreetingAgent
+await call_agent_async("I can't access my account.")   # AccountAgent
+await call_agent_async("What is your return policy?")  # FAQAgent
+await call_agent_async("I have a privacy question.")   # SupportRootAgent
