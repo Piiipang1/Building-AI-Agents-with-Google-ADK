@@ -33,3 +33,41 @@ def lookup_faq(question: str) -> str:
     return response["choices"][0]["message"]["content"].strip()
 
 faq_tool  = FunctionTool(func=lookup_faq)
+
+# Specialist Agents
+greeting_agent = LlmAgent(
+    name="GreetingAgent",
+    description="Handles greetings from users.",
+    instruction="Respond cheerfully when the user says hello.",
+    model=AGENT_MODEL
+)
+
+account_agent = LlmAgent(
+    name="AccountAgent",
+    description="Handles questions about login issues or account access.",
+    instruction="Help users who are having trouble logging in or accessing their account.",
+    model=AGENT_MODEL
+)
+
+faq_agent = LlmAgent(
+    name="FAQAgent",
+    description="Answers common questions using the FAQ knowledge base.",
+    instruction="Use the FAQ tool to answer questions that match the FAQs.",
+    model=AGENT_MODEL,
+    tools=[faq_tool]
+)
+
+# Root agent with delegation logic
+root_agent = LlmAgent(
+    name="SupportRootAgent",
+    description="Delegates to specialized sub-agents for support queries.",
+    instruction=(
+        "If the user greets you, delegate to GreetingAgent.\n"
+        "If the user has an account or login issue, delegate to AccountAgent.\n"
+        "If the question matches a known FAQ topic (e.g., returns, hours, contact), "
+        "delegate to FAQAgent. Do not answer as the FAQAgent if the topic doesn't match any of the FAQs.\n"
+        "Otherwise, answer directly as best you (the Root Agent) can."
+    ),
+    model=AGENT_MODEL,
+    sub_agents=[greeting_agent, account_agent, faq_agent]
+)
